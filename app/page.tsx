@@ -1,5 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
 import { Playfair_Display, Space_Grotesk } from "next/font/google";
+import { fetchImages } from "@/lib/services/images";
+import type { ImageRow } from "@/lib/services/images";
 
 export const revalidate = 60;
 
@@ -14,20 +15,6 @@ const body = Space_Grotesk({
   weight: ["400", "500", "600"],
   variable: "--font-body",
 });
-
-type ImageRow = {
-  id?: string;
-  created_datetime_utc?: string | null;
-  modified_datetime_utc?: string | null;
-  url?: string | null;
-  is_common_use?: boolean | null;
-  profile_id?: string | null;
-  additional_context?: string | null;
-  is_public?: boolean | null;
-  image_description?: string | null;
-  celebrity_recognition?: string | null;
-  [key: string]: unknown;
-};
 
 const getDescription = (row: ImageRow) => {
   if (typeof row.image_description === "string" && row.image_description.trim().length > 0) {
@@ -50,12 +37,9 @@ const formatDateTime = (value?: string | null) => {
 };
 
 export default async function Home() {
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "";
-  const supabaseAnonKey =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? "";
+  const { data: images, error, missingEnv } = await fetchImages();
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (missingEnv) {
     return (
       <main
         className={`${display.variable} ${body.variable} min-h-screen bg-[radial-gradient(circle_at_top,_#ffe0f2,_#ffd1ea_35%,_#f7a7d8_70%,_#f37dbd)] px-6 py-12 text-[#2d0f22]`}
@@ -83,20 +67,6 @@ export default async function Home() {
       </main>
     );
   }
-
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: false },
-  });
-
-  const { data, error } = await supabase
-    .from("images")
-    .select(
-      "id,created_datetime_utc,modified_datetime_utc,url,is_common_use,profile_id,additional_context,is_public,image_description,celebrity_recognition"
-    )
-    .order("created_datetime_utc", { ascending: false })
-    .limit(100);
-
-  const images = (data ?? []) as ImageRow[];
 
   return (
     <main
@@ -132,14 +102,14 @@ export default async function Home() {
               </p>
             </div>
             <div className="rounded-full border border-white/80 bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-[#7a2557] shadow-[0_16px_40px_-28px_rgba(132,14,80,0.6)]">
-              Pink • Playful • Punchlines
+              Pink - Playful - Punchlines
             </div>
           </div>
         </header>
 
         {error ? (
           <div className="rounded-2xl border border-red-200 bg-white/80 px-5 py-4 text-sm text-red-700 shadow-[0_20px_60px_-40px_rgba(132,14,80,0.5)]">
-            Failed to load images: {error.message}
+            Failed to load images: {error}
           </div>
         ) : images.length === 0 ? (
           <div className="rounded-2xl border border-white/70 bg-white/80 px-5 py-4 text-sm text-[#5d1f48] shadow-[0_20px_60px_-40px_rgba(132,14,80,0.5)]">
@@ -172,11 +142,11 @@ export default async function Home() {
                     </summary>
                     <div className="mt-2 max-h-60 w-64 overflow-auto rounded-2xl border border-white/70 bg-white/90 p-4 text-xs text-[#5d1f48] shadow-[0_20px_60px_-40px_rgba(132,14,80,0.6)] backdrop-blur">
                       <p className="font-semibold text-[#7a2557]">Description</p>
-                      <p className="mt-1">{image.image_description ?? "—"}</p>
+                      <p className="mt-1">{image.image_description ?? "-"}</p>
                       <p className="mt-3 font-semibold text-[#7a2557]">Celebrity recognition</p>
-                      <p className="mt-1">{image.celebrity_recognition ?? "—"}</p>
+                      <p className="mt-1">{image.celebrity_recognition ?? "-"}</p>
                       <p className="mt-3 font-semibold text-[#7a2557]">Additional context</p>
-                      <p className="mt-1">{image.additional_context ?? "—"}</p>
+                      <p className="mt-1">{image.additional_context ?? "-"}</p>
                     </div>
                   </details>
                 </div>
