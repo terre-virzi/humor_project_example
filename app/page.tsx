@@ -1,6 +1,8 @@
 import { Playfair_Display, Space_Grotesk } from "next/font/google";
 import { fetchImages } from "@/lib/services/images";
 import type { ImageRow } from "@/lib/services/images";
+import AuthBadge from "@/app/components/auth-badge";
+import { createSupabaseServer } from "@/lib/supabase/server";
 
 export const revalidate = 60;
 
@@ -38,6 +40,15 @@ const formatDateTime = (value?: string | null) => {
 
 export default async function Home() {
   const { data: images, error, missingEnv } = await fetchImages();
+  let userEmail: string | null = null;
+
+  if (!missingEnv) {
+    const supabase = createSupabaseServer();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    userEmail = user?.email ?? null;
+  }
 
   if (missingEnv) {
     return (
@@ -101,8 +112,11 @@ export default async function Home() {
                 Each image is a potential punchline, waiting for its big laugh.
               </p>
             </div>
-            <div className="rounded-full border border-white/80 bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-[#7a2557] shadow-[0_16px_40px_-28px_rgba(132,14,80,0.6)]">
-              Pink - Playful - Punchlines
+            <div className="flex flex-col items-end gap-3">
+              <div className="rounded-full border border-white/80 bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-[#7a2557] shadow-[0_16px_40px_-28px_rgba(132,14,80,0.6)]">
+                Pink - Playful - Punchlines
+              </div>
+              <AuthBadge email={userEmail} />
             </div>
           </div>
         </header>
