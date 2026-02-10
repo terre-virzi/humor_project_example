@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get("code");
 
   if (code && url && anonKey) {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(url, anonKey, {
       cookies: {
         getAll() {

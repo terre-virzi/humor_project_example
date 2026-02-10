@@ -43,7 +43,7 @@ export default async function Home() {
   let userEmail: string | null = null;
 
   if (!missingEnv) {
-    const supabase = createSupabaseServer();
+    const supabase = await createSupabaseServer();
     const {
       data: { user },
     } = await supabase.auth.getUser();
